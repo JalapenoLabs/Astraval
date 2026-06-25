@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Root manifest for the Astraval Cargo workspace.
+#
+# This workspace holds the Apache-2.0 core of Astraval: the Perforce wire
+# protocol, the client logic built on top of it, and the `astraval` CLI binary.
+# Shared metadata and dependency versions live here so every crate stays in
+# lockstep and a single edit keeps the whole tree consistent.
+
+[workspace]
+members = ["crates/astraval-proto", "crates/astraval-core", "crates/astraval"]
+
+# Resolver v3 is the default for edition 2024; we state it explicitly so the
+# choice is obvious and does not silently change if a member lowers its edition.
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+authors = ["Jalapeno Labs"]
+repository = "https://github.com/JalapenoLabs/Astraval"
+
+# Minimum supported Rust version. Pinned to the first stable release that ships
+# edition 2024 so we can use it while keeping the floor as low as is honest.
+rust-version = "1.85"
+
+# Shared dependency versions. Member crates opt in via `workspace = true`, which
+# keeps a single source of truth for every external version across the tree.
+[workspace.dependencies]
+astraval-proto = { version = "0.1.0", path = "crates/astraval-proto" }
+astraval-core = { version = "0.1.0", path = "crates/astraval-core" }
