@@ -20,6 +20,9 @@
 //! rather than declared here, so their behavior matches what users expect from
 //! any clap program while still using the short letters `p4` uses.
 
+use std::path::PathBuf;
+
+use astraval_core::config::GlobalSettings;
 use clap::{Parser, Subcommand};
 
 /// The `astraval` command-line client.
@@ -97,6 +100,30 @@ pub struct GlobalOptions {
     /// Marshalled output for scripting (Perforce `-G`).
     #[arg(short = 'G', global = true)]
     pub marshalled: bool,
+}
+
+impl GlobalOptions {
+    /// Translates the parsed flags into the core resolver's input struct.
+    ///
+    /// The configuration subsystem lives in `astraval-core` and is intentionally
+    /// decoupled from clap, so the binary maps its flags onto
+    /// [`GlobalSettings`] here. Only the flags that participate in configuration
+    /// resolution carry over: `-z` (tagged output) and `-G` (marshalled output)
+    /// are output *modes*, not connection or identity settings, so they are not
+    /// part of resolution. The `-d` override is turned into a [`PathBuf`] because
+    /// it names a directory the `P4CONFIG` search starts from.
+    #[must_use]
+    pub fn to_settings(&self) -> GlobalSettings {
+        GlobalSettings {
+            port: self.port.clone(),
+            user: self.user.clone(),
+            client: self.client.clone(),
+            password: self.password.clone(),
+            charset: self.charset.clone(),
+            host: self.host.clone(),
+            dir: self.dir.as_ref().map(PathBuf::from),
+        }
+    }
 }
 
 /// The set of subcommands `astraval` understands.

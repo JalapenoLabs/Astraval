@@ -7,13 +7,16 @@
 //! single-dash global flags (`-p`, `-u`, `-c`, and friends) and a set of
 //! subcommands that grow over the milestones.
 //!
-//! `main` is deliberately thin. It parses arguments into [`cli::Cli`], then
-//! hands the chosen subcommand and the shared global options to
-//! [`commands::dispatch`], which returns the process exit code. Parsing lives in
-//! [`cli`], per-command behavior in [`commands`]; this file only connects them.
+//! `main` is deliberately thin. It parses arguments into [`cli::Cli`], resolves
+//! the Perforce-compatible configuration from the flags and the process
+//! environment, then hands the chosen subcommand and that resolved configuration
+//! to [`commands::dispatch`], which returns the process exit code. Parsing lives
+//! in [`cli`], configuration resolution in [`config`], per-command behavior in
+//! [`commands`]; this file only connects them.
 
 mod cli;
 mod commands;
+mod config;
 mod exit;
 
 use std::process::ExitCode;
@@ -27,5 +30,15 @@ fn main() -> ExitCode {
     // no-subcommand case (which prints help) by exiting before returning. Past
     // this point we always have a valid command to dispatch.
     let cli = Cli::parse();
-    commands::dispatch(&cli.command, &cli.global)
+
+    // Resolve configuration once, up front, so every command receives an
+    // already-resolved view. A resolution failure (for example an unreadable
+    // P4CONFIG file) flows through the same single error path as any command
+    // failure, keeping the exit-code contract uniform.
+    let config = match config::resolve_from_process(&cli.global) {
+        Ok(config) => config,
+        Err(error) => return exit::report(&error),
+    };
+
+    commands::dispatch(&cli.command, &config)
 }

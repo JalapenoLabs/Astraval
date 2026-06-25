@@ -9,11 +9,13 @@
 //! behavior without reimplementing it.
 //!
 //! This crate is currently a scaffold. The workspace, sync, lock, and merge
-//! engines arrive in later milestones. The one piece already in place is the
-//! [`error`] module: the shared error spine every client operation returns,
-//! whose [`ErrorClass`] the `astraval` binary maps to Perforce-compatible exit
-//! codes.
+//! engines arrive in later milestones. Two pieces are already in place: the
+//! [`error`] module, the shared error spine every client operation returns, whose
+//! [`ErrorClass`] the `astraval` binary maps to Perforce-compatible exit codes;
+//! and the [`config`] module, which resolves Perforce-compatible connection and
+//! identity settings into the single [`config::ResolvedConfig`] the CLI reads.
 
+pub mod config;
 mod error;
 
 #[doc(inline)]
