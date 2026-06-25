@@ -10,5 +10,16 @@ authors.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+# Publish metadata. Required for crates.io and enforced by the `clippy::cargo`
+# lint group, which keeps every publishable crate self-describing.
+readme = "../../README.md"
+keywords = ["perforce", "version-control", "sync", "locking", "game-development"]
+categories = ["development-tools", "filesystem"]
+
+# Inherit the workspace-wide lint policy (deny-warnings + the curated clippy
+# set) defined in the root `Cargo.toml`.
+[lints]
+workspace = true
+
 [dependencies]
 astraval-proto.workspace = true

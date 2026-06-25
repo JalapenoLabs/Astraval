@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Cross-editor baseline so files look the same regardless of which editor a
+# contributor uses. This complements `rustfmt.toml` (which governs Rust source
+# precisely) by covering every other file type and the editors that do not run
+# rustfmt on save. See https://editorconfig.org.
+
+# Stop searching parent directories; this is the project root.
+root = true
+
+# Defaults for every file in the repo.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Rust source. These mirror `rustfmt.toml` so editors that auto-indent before
+# rustfmt runs already match the formatter's output.
+[*.rs]
+indent_size = 4
+
+# TOML (Cargo manifests, this toolchain config). Two-space indent is the
+# community convention and keeps nested tables compact.
+[*.toml]
+indent_size = 2
+
+# Markdown. Trailing whitespace is significant here (two trailing spaces force a
+# line break), so we must not strip it.
+[*.md]
+trim_trailing_whitespace = false

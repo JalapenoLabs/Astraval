@@ -30,3 +30,72 @@ rust-version = "1.85"
 [workspace.dependencies]
 astraval-proto = { version = "0.1.0", path = "crates/astraval-proto" }
 astraval-core = { version = "0.1.0", path = "crates/astraval-core" }
+
+# Shared lint policy. Each member crate opts in with `[lints] workspace = true`,
+# so the rules below apply uniformly across the tree from a single source of
+# truth. Crucially, these levels are baked into every plain `cargo build` and
+# `cargo clippy` run: a contributor sees the same failures locally that CI sees,
+# without relying on a CI-only `-D warnings` flag. (CI still passes `-D warnings`
+# in issue #33 as belt-and-suspenders.)
+#
+# The set is taken from the project's Rust guidelines (rust.md,
+# M-STATIC-VERIFICATION): enable the major clippy categories plus a curated
+# slice of the `restriction` group, and treat every warning as an error so
+# nothing rots. Individual lints can be opted back out with a documented
+# `#[expect(..., reason = "...")]` at the site that needs it (rust.md,
+# M-LINT-OVERRIDE-EXPECT).
+[workspace.lints.rust]
+# Turn all compiler warnings into hard errors so the deny-warnings policy is
+# enforced by the build itself, not just by a CI flag.
+warnings = "deny"
+
+# Extra compiler lints recommended by M-STATIC-VERIFICATION to catch subtle bugs
+# and keep the code clean. They are `warn` here but escalate to errors via the
+# `warnings = "deny"` line above.
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[workspace.lints.clippy]
+# Major clippy categories. The negative `priority` lets the specific
+# `restriction` lints below override these group settings where they overlap.
+cargo = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
+# Selected lints from the `restriction` group. These forbid specific constructs
+# to drive up consistency, quality, and brevity across the codebase.
+allow_attributes_without_reason = "warn"
+as_pointer_underscore = "warn"
+assertions_on_result_states = "warn"
+clone_on_ref_ptr = "warn"
+deref_by_slicing = "warn"
+disallowed_script_idents = "warn"
+empty_drop = "warn"
+empty_enum_variants_with_brackets = "warn"
+empty_structs_with_brackets = "warn"
+fn_to_numeric_cast_any = "warn"
+if_then_some_else_none = "warn"
+map_err_ignore = "warn"
+redundant_type_annotations = "warn"
+renamed_function_params = "warn"
+semicolon_outside_block = "warn"
+# NOTE: `string_to_string` from the rust.md set was removed in this toolchain
+# (its cases are now covered by `clippy::implicit_clone`), so it is omitted to
+# avoid an unknown-lint error under the deny-warnings policy.
+undocumented_unsafe_blocks = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unneeded_field_pattern = "warn"
+unused_result_ok = "warn"
+
+# May conflict with structured logging message templates, so allow it.
+literal_string_with_formatting_args = "allow"

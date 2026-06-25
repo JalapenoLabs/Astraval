@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# House Rust formatting style, applied identically by every contributor and CI.
+#
+# `cargo fmt` reads this file so the formatted output is deterministic no matter
+# whose editor or platform produced it. Every option here is stable on the
+# pinned toolchain (see `rust-toolchain.toml`); nightly-only options are
+# deliberately avoided so `cargo fmt --check` is a reliable gate on stable.
+
+# Format against edition 2024 rules, matching the workspace edition. Without
+# this, rustfmt defaults to the 2015 style and can disagree with how the 2024
+# compiler parses the code.
+edition = "2024"
+
+# Keep lines readable on a standard screen. This complements the documentation
+# guidance in our Rust guidelines (rust.md, M-FIRST-DOC-SENTENCE), which keeps
+# the all-important first doc sentence on a single short line; a 100-column body
+# keeps code and its doc comments comfortably skimmable side by side.
+max_width = 100
+
+# Spaces, not tabs, and four of them. Spaces render identically everywhere,
+# which keeps diffs and code review free of whitespace surprises.
+hard_tabs = false
+tab_spaces = 4
+
+# Always emit Unix (LF) line endings, matching `.editorconfig`. Pinning this
+# avoids CRLF/LF churn in diffs when contributors work across Windows and Unix.
+newline_style = "Unix"
+
+# Prefer the `?` operator over explicit `match`/`return` on `Result`. This
+# follows the idiomatic-Rust direction of our guidelines (rust.md cites the API
+# guideline C-QUESTION-MARK), keeping error propagation concise and uniform.
+use_try_shorthand = true
+
+# Use field init shorthand (`Foo { x }` over `Foo { x: x }`) wherever possible,
+# removing redundant noise the reader would otherwise have to parse.
+use_field_init_shorthand = true
+
+# Keep imports tidy and deterministic: sort them and collapse nested paths so
+# every contributor produces the same import block.
+reorder_imports = true
+
+# NOTE: finer import controls (`imports_granularity`, `group_imports`) are
+# nightly-only in rustfmt and are intentionally omitted. Enabling them would
+# make `cargo fmt --check` fail on the pinned stable toolchain. Revisit if a
+# future stable rustfmt stabilizes them.

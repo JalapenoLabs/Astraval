@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Pins the Rust toolchain for every contributor and every CI run.
+#
+# Rustup reads this file the moment any cargo command runs inside the repo and
+# transparently installs and selects the channel below, so "works on my machine"
+# and "works in CI" become the same machine. We pin an exact stable version
+# rather than the floating `stable` channel: a new stable can introduce new
+# clippy lints, and because our lint policy denies warnings (see the root
+# `Cargo.toml`), a silent toolchain bump could turn a green tree red without any
+# code change. Bumping this pin is therefore a deliberate, reviewable commit.
+#
+# Note this is distinct from `rust-version` (MSRV) in `Cargo.toml`: MSRV is the
+# oldest toolchain the crates promise to compile on; this is the one specific
+# toolchain we develop and lint against.
+[toolchain]
+channel = "1.96.0"
+
+# Components every contributor needs so formatting and linting are available
+# out of the box without a separate `rustup component add`.
+components = ["rustfmt", "clippy"]
+
+# The host target. Listing it explicitly ensures rustup provisions the standard
+# library for this platform on a fresh install.
+targets = ["x86_64-pc-windows-msvc"]
