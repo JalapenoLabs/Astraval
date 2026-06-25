@@ -34,6 +34,11 @@ pub mod info;
 /// records through the shared output layer (human, `-ztag`, or `-G`) instead of
 /// each one re-deriving the mode from the flags.
 pub fn dispatch(command: &Commands, config: &ResolvedConfig, mode: OutputMode) -> ExitCode {
+    // A representative dispatch event, visible at `-vv` (debug) and above. It
+    // proves the tracing pipeline end to end today; the protocol layer hangs its
+    // detailed per-RPC spans off this same flow in later issues.
+    tracing::debug!(?command, ?mode, "dispatching command");
+
     let outcome: Result<()> = match command {
         Commands::Info => info::run(config, mode),
     };

@@ -7,21 +7,25 @@
 //! single-dash global flags (`-p`, `-u`, `-c`, and friends) and a set of
 //! subcommands that grow over the milestones.
 //!
-//! `main` is deliberately thin. It parses arguments into [`cli::Cli`], resolves
-//! the Perforce-compatible configuration from the flags and the process
-//! environment, then hands the chosen subcommand and that resolved configuration
-//! to [`commands::dispatch`], which returns the process exit code. Parsing lives
-//! in [`cli`], configuration resolution in [`config`], per-command behavior in
-//! [`commands`]; this file only connects them.
+//! `main` is deliberately thin. It parses arguments into [`cli::Cli`], installs
+//! the tracing subscriber from the resolved verbosity, resolves the
+//! Perforce-compatible configuration from the flags and the process environment,
+//! then hands the chosen subcommand and that resolved configuration to
+//! [`commands::dispatch`], which returns the process exit code. Parsing lives in
+//! [`cli`], subscriber setup in [`telemetry`], configuration resolution in
+//! [`config`], per-command behavior in [`commands`]; this file only connects
+//! them.
 
 mod cli;
 mod commands;
 mod config;
 mod exit;
+mod telemetry;
 
 use std::process::ExitCode;
 
 use clap::Parser;
+use tracing::debug;
 
 use crate::cli::Cli;
 
@@ -30,6 +34,12 @@ fn main() -> ExitCode {
     // no-subcommand case (which prints help) by exiting before returning. Past
     // this point we always have a valid command to dispatch.
     let cli = Cli::parse();
+
+    // Install the tracing subscriber first, from the resolved verbosity, so every
+    // step after this point (config resolution included) can emit observable
+    // events. Output goes to stderr, leaving stdout clean for `-G`/`-ztag`.
+    telemetry::init(cli.global.verbose);
+    debug!(verbosity = cli.global.verbose, "tracing initialized");
 
     // Resolve configuration once, up front, so every command receives an
     // already-resolved view. A resolution failure (for example an unreadable

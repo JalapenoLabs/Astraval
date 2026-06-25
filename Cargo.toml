@@ -36,6 +36,23 @@ astraval-core = { version = "0.1.0", path = "crates/astraval-core" }
 # Perforce-compatible flag layout readable and close to its documentation.
 clap = { version = "4", features = ["derive"] }
 
+# Structured tracing. The split is deliberate and load-bearing for the
+# dependency gradient: library crates (`astraval-proto`, `astraval-core`) depend
+# only on the lightweight `tracing` facade so they can emit spans and events
+# without choosing an output sink, while the `astraval` binary additionally
+# pulls in `tracing-subscriber` and owns the one-time subscriber installation.
+# This keeps "who decides where logs go" firmly in the application, exactly
+# where it belongs.
+tracing = { version = "0.1" }
+# `env-filter` brings in the `EnvFilter` directive parser (honoring `RUST_LOG`
+# and our documented `P4DEBUG`-style variable); `fmt` provides the stderr
+# formatter. We disable default features so we opt into precisely these two and
+# nothing more.
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+    "env-filter",
+] }
+
 # Shared lint policy. Each member crate opts in with `[lints] workspace = true`,
 # so the rules below apply uniformly across the tree from a single source of
 # truth. Crucially, these levels are baked into every plain `cargo build` and

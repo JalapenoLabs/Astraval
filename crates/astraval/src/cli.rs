@@ -101,6 +101,20 @@ pub struct GlobalOptions {
     /// Marshalled output for scripting (Perforce `-G`).
     #[arg(short = 'G', global = true)]
     pub marshalled: bool,
+
+    /// Increase trace verbosity; repeat for more (`-v`, `-vv`, `-vvv`).
+    ///
+    /// Each occurrence raises the tracing level one step: the quiet default emits
+    /// only warnings and errors, `-v` adds info, `-vv` adds debug, and `-vvv`
+    /// enables full trace output. Trace output goes to stderr, so it never
+    /// pollutes the machine-readable stdout of `-G`/`-ztag`. For per-target
+    /// control, set `RUST_LOG` or `ASTRAVAL_LOG` instead; those take precedence.
+    ///
+    /// Perforce's debug surface is `P4DEBUG` and `-v`; this is the idiomatic
+    /// `tracing` equivalent. `-V` stays clap's version flag, so this uses the
+    /// lowercase letter, which does not collide with any `p4` global flag.
+    #[arg(short = 'v', action = clap::ArgAction::Count, global = true)]
+    pub verbose: u8,
 }
 
 impl GlobalOptions {
@@ -235,6 +249,30 @@ mod tests {
         let cli = Cli::try_parse_from(["astraval", "-zmaxLockTime=1", "info"])
             .expect("an arbitrary -z argument should parse");
         assert_eq!(cli.global.output_mode(), OutputMode::Human);
+    }
+
+    /// With no `-v`, verbosity is zero: the quiet, warnings-only default.
+    #[test]
+    fn verbosity_defaults_to_zero() {
+        let cli = Cli::try_parse_from(["astraval", "info"]).expect("a bare subcommand parses");
+        assert_eq!(cli.global.verbose, 0);
+    }
+
+    /// Repeated `-v` flags accumulate into a count, before or after the command.
+    ///
+    /// This is the wiring the verbosity-to-level mapping consumes; the mapping
+    /// itself is tested in [`crate::telemetry`].
+    #[test]
+    fn repeated_verbose_flags_accumulate() {
+        let cli = Cli::try_parse_from(["astraval", "-v", "-v", "info"])
+            .expect("repeated -v flags should parse");
+        assert_eq!(cli.global.verbose, 2);
+
+        // The clustered `-vvv` spelling and a position after the subcommand both
+        // resolve to the same count, matching how users actually type it.
+        let cli = Cli::try_parse_from(["astraval", "info", "-vvv"])
+            .expect("clustered -vvv after the subcommand should parse");
+        assert_eq!(cli.global.verbose, 3);
     }
 
     /// An unknown subcommand is a usage error, not a silent no-op.

@@ -23,3 +23,7 @@ workspace = true
 
 [dependencies]
 astraval-proto.workspace = true
+
+# Only the lightweight `tracing` facade: this crate emits spans and events but
+# never decides where they go. The `astraval` binary owns the subscriber.
+tracing.workspace = true

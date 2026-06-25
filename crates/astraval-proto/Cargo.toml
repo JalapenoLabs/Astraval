@@ -22,3 +22,6 @@ categories = ["network-programming", "encoding"]
 workspace = true
 
 [dependencies]
+# Only the lightweight `tracing` facade: this crate emits spans and events but
+# never decides where they go. The `astraval` binary owns the subscriber.
+tracing.workspace = true

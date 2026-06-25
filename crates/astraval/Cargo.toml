@@ -28,3 +28,9 @@ workspace = true
 [dependencies]
 astraval-core.workspace = true
 clap.workspace = true
+
+# The binary owns tracing output: the `tracing` facade to emit its own events,
+# and `tracing-subscriber` to install the one process-wide subscriber that
+# routes every crate's events to stderr.
+tracing.workspace = true
+tracing-subscriber.workspace = true
