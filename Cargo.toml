@@ -31,6 +31,11 @@ rust-version = "1.85"
 astraval-proto = { version = "0.1.0", path = "crates/astraval-proto" }
 astraval-core = { version = "0.1.0", path = "crates/astraval-core" }
 
+# Command-line parser for the `astraval` binary. The `derive` feature lets us
+# declare the CLI surface as plain structs and enums, which keeps the
+# Perforce-compatible flag layout readable and close to its documentation.
+clap = { version = "4", features = ["derive"] }
+
 # Shared lint policy. Each member crate opts in with `[lints] workspace = true`,
 # so the rules below apply uniformly across the tree from a single source of
 # truth. Crucially, these levels are baked into every plain `cargo build` and

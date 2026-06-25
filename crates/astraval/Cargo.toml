@@ -27,3 +27,4 @@ workspace = true
 
 [dependencies]
 astraval-core.workspace = true
+clap.workspace = true
