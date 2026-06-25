@@ -40,5 +40,11 @@ fn main() -> ExitCode {
         Err(error) => return exit::report(&error),
     };
 
-    commands::dispatch(&cli.command, &config)
+    // The output mode is a presentation concern derived purely from the global
+    // flags (`-G`, `-ztag`), separate from the connection/identity configuration
+    // resolved above. Compute it here and hand it to every command so the
+    // rendering choice lives in one place.
+    let mode = cli.global.output_mode();
+
+    commands::dispatch(&cli.command, &config, mode)
 }

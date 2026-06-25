@@ -14,6 +14,7 @@ use std::process::ExitCode;
 
 use astraval_core::Result;
 use astraval_core::config::ResolvedConfig;
+use astraval_core::output::OutputMode;
 
 use crate::cli::Commands;
 use crate::exit;
@@ -28,9 +29,13 @@ pub mod info;
 /// issues add their variant to [`Commands`] and a matching arm here; the resolved
 /// `config` is forwarded by reference so every command sees the same already
 /// resolved configuration without consuming it.
-pub fn dispatch(command: &Commands, config: &ResolvedConfig) -> ExitCode {
+///
+/// The selected [`OutputMode`] is forwarded too, so every command renders its
+/// records through the shared output layer (human, `-ztag`, or `-G`) instead of
+/// each one re-deriving the mode from the flags.
+pub fn dispatch(command: &Commands, config: &ResolvedConfig, mode: OutputMode) -> ExitCode {
     let outcome: Result<()> = match command {
-        Commands::Info => info::run(config),
+        Commands::Info => info::run(config, mode),
     };
 
     match outcome {

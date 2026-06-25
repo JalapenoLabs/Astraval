@@ -23,6 +23,7 @@
 use std::path::PathBuf;
 
 use astraval_core::config::GlobalSettings;
+use astraval_core::output::OutputMode;
 use clap::{Parser, Subcommand};
 
 /// The `astraval` command-line client.
@@ -124,6 +125,23 @@ impl GlobalOptions {
             dir: self.dir.as_ref().map(PathBuf::from),
         }
     }
+
+    /// Selects the output rendering mode these flags request.
+    ///
+    /// `-G` selects marshalled output; `-ztag` (the `-z` flag carrying the literal
+    /// argument `tag`) selects tagged output; anything else is the human default.
+    /// Precedence is resolved by [`OutputMode::from_flags`] and matches `p4`: `-G`
+    /// wins over `-ztag`, which wins over human.
+    ///
+    /// Perforce's `-z` is a general "tagged-output variant" switch whose only
+    /// value the CLI acts on today is `tag`; an unrecognized `-z` argument falls
+    /// through to human output rather than erroring, leaving room for later
+    /// variants without changing this contract.
+    #[must_use]
+    pub fn output_mode(&self) -> OutputMode {
+        let tagged = self.tag.as_deref() == Some("tag");
+        OutputMode::from_flags(self.marshalled, tagged)
+    }
 }
 
 /// The set of subcommands `astraval` understands.
@@ -187,6 +205,36 @@ mod tests {
 
         assert_eq!(cli.global.user.as_deref(), Some("bob"));
         assert!(matches!(cli.command, Commands::Info));
+    }
+
+    /// `-G` selects marshalled output even when `-ztag` is also present.
+    ///
+    /// This pins the flag-to-mode precedence at the CLI boundary, complementing
+    /// the mode-selection test in `astraval_core::output`.
+    #[test]
+    fn output_mode_prefers_marshalled_over_tagged() {
+        let cli = Cli::try_parse_from(["astraval", "-ztag", "-G", "info"])
+            .expect("both output flags should parse");
+        assert_eq!(cli.global.output_mode(), OutputMode::Marshalled);
+    }
+
+    /// `-ztag` alone selects tagged output; no output flags means human.
+    #[test]
+    fn output_mode_maps_tag_and_default() {
+        let tagged =
+            Cli::try_parse_from(["astraval", "-ztag", "info"]).expect("a -ztag flag should parse");
+        assert_eq!(tagged.global.output_mode(), OutputMode::Tagged);
+
+        let human = Cli::try_parse_from(["astraval", "info"]).expect("a bare subcommand parses");
+        assert_eq!(human.global.output_mode(), OutputMode::Human);
+    }
+
+    /// An unrecognized `-z` argument falls through to human output.
+    #[test]
+    fn output_mode_ignores_unknown_z_argument() {
+        let cli = Cli::try_parse_from(["astraval", "-zmaxLockTime=1", "info"])
+            .expect("an arbitrary -z argument should parse");
+        assert_eq!(cli.global.output_mode(), OutputMode::Human);
     }
 
     /// An unknown subcommand is a usage error, not a silent no-op.
