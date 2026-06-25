@@ -14,6 +14,7 @@
 
 mod cli;
 mod commands;
+mod exit;
 
 use std::process::ExitCode;
 

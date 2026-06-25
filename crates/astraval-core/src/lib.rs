@@ -9,9 +9,24 @@
 //! behavior without reimplementing it.
 //!
 //! This crate is currently a scaffold. The workspace, sync, lock, and merge
-//! engines arrive in later milestones.
+//! engines arrive in later milestones. The one piece already in place is the
+//! [`error`] module: the shared error spine every client operation returns,
+//! whose [`ErrorClass`] the `astraval` binary maps to Perforce-compatible exit
+//! codes.
+
+mod error;
+
+#[doc(inline)]
+pub use error::{Error, ErrorClass};
 
 use astraval_proto::TARGET_PROTOCOL_LEVEL;
+
+/// The result type returned by fallible Astraval client operations.
+///
+/// A thin alias over [`std::result::Result`] fixing the error half to this
+/// crate's [`Error`], so client APIs read as `Result<T>` and callers get one
+/// consistent error type to handle.
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Returns the Perforce protocol level the client currently targets.
 ///
