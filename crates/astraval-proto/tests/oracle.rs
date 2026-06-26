@@ -29,6 +29,7 @@
 use std::env;
 use std::time::Duration;
 
+use astraval_proto::handshake::{Protocol, negotiate};
 use astraval_proto::{Connection, Message};
 
 /// How long to wait for the oracle's reply before failing rather than hanging.
@@ -76,5 +77,36 @@ fn real_server_accepts_our_framing_and_replies() {
     assert!(
         !reply.fields().is_empty(),
         "oracle reply should carry at least one field, got {reply:?}"
+    );
+}
+
+#[test]
+#[ignore = "requires a live p4d oracle; run with --ignored"]
+fn real_server_completes_protocol_negotiation() {
+    // The full issue #9 handshake against a real `p4d`: send the `protocol`
+    // opener, send a command, and parse the server's `protocol` reply into the
+    // negotiated levels. Completing this is strong evidence the handshake is
+    // wire-accurate, not merely self-consistent.
+    let mut conn = Connection::connect(oracle_addr()).expect("connect to oracle");
+    conn.transport()
+        .set_read_timeout(Some(REPLY_TIMEOUT))
+        .expect("set read timeout");
+
+    let opener = Protocol::new("astraval-test", format!("tcp:{}", oracle_addr()));
+    // A light, side-effect-free command; the server's `protocol` reply rides on
+    // the front of the response to it.
+    let command = Message::new()
+        .with("func", "user-info")
+        .with("prog", "astraval-test")
+        .with("client", "astraval-test")
+        .with("user", "astraval-test");
+
+    let negotiated = negotiate(&mut conn, &opener, &command).expect("complete the handshake");
+
+    // We do not assert exact levels (they vary by server build); we require that
+    // a real server settled on a sane, positive server API level with us.
+    assert!(
+        negotiated.server_api_level() > 0,
+        "oracle should negotiate a positive server API level, got {negotiated:?}"
     );
 }

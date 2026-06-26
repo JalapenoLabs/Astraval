@@ -41,7 +41,8 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Examples
 /// ```
-/// assert_eq!(astraval_core::target_protocol_level(), 0);
+/// // The targeted client API level Astraval negotiates first.
+/// assert_eq!(astraval_core::target_protocol_level(), 100);
 /// ```
 #[must_use]
 pub fn target_protocol_level() -> u32 {

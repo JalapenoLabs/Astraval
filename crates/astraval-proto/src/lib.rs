@@ -12,7 +12,7 @@
 //!
 //! # What is here today
 //!
-//! The lowest transport layer:
+//! The transport and the opening handshake:
 //!
 //! - [`frame`]: the I/O-agnostic framing codec. [`encode`] turns a [`Message`]
 //!   of [`Field`]s into wire bytes and [`decode`] turns wire bytes back into a
@@ -20,9 +20,12 @@
 //! - [`connection`]: a blocking [`Connection`] that frames messages over any
 //!   `Read + Write` transport, with [`Connection::connect`] opening a real TCP
 //!   socket to a server.
+//! - [`handshake`]: the protocol-negotiation [`negotiate`] exchange that opens a
+//!   session, building the client [`Protocol`] opener and parsing the server's
+//!   reply into a [`Negotiated`] result.
 //!
-//! The login handshake (negotiation) and command dispatch are separate layers
-//! built on top of this one in later milestones.
+//! Command dispatch over the negotiated session is a separate layer built on top
+//! of this one in a later milestone.
 //!
 //! # Example
 //! ```
@@ -39,15 +42,23 @@
 
 pub mod connection;
 pub mod frame;
+pub mod handshake;
 
 #[doc(inline)]
 pub use connection::{Connection, ConnectionError};
 #[doc(inline)]
 pub use frame::{Decoded, Field, FrameError, Message, PREAMBLE_LEN, decode, encode};
+#[doc(inline)]
+pub use handshake::{
+    HandshakeError, Negotiated, Protocol, REQUEST_MAX_SERVER_API_LEVEL, TARGET_CLIENT_API_LEVEL,
+    negotiate,
+};
 
-/// The protocol level this crate currently targets.
+/// The client protocol level this crate negotiates first.
 ///
-/// Astraval negotiates one Perforce protocol level first and expands coverage
-/// from there. The value is a placeholder until real negotiation lands; it
-/// exists so downstream crates can already reference the constant by name.
-pub const TARGET_PROTOCOL_LEVEL: u32 = 0;
+/// Astraval targets one Perforce protocol level before expanding coverage. This
+/// is the client API level we advertise in the `protocol` opener; the server
+/// reports its own level in reply (see [`Negotiated::server_api_level`]). It
+/// aliases [`TARGET_CLIENT_API_LEVEL`] so downstream crates can refer to the
+/// targeted level by either name.
+pub const TARGET_PROTOCOL_LEVEL: u32 = TARGET_CLIENT_API_LEVEL;
